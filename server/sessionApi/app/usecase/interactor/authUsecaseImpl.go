@@ -50,6 +50,27 @@ func generateRandomState() (string, error) {
 	return state, nil
 }
 
+func (u *authUsecase) Session(ctx echo.Context) (string, error) {
+	sess, err := session.Get("session", ctx)
+	if err != nil {
+		return "", &dto.AuthUnauthorizedError{
+			BaseErr: fmt.Errorf(
+				"failed to get session: %w",
+				err),
+		}
+	}
+	profile := sess.Values["profile"]
+	if profile == nil {
+		return "", &dto.AuthUnauthorizedError{
+			BaseErr: fmt.Errorf(
+				"failed to get profile: %w",
+				err),
+		}
+	}
+
+	return fmt.Sprint(profile), nil
+}
+
 func (u *authUsecase) Login(ctx echo.Context, request *inputport.AuthLoginRequest) error {
 	sess, err := session.Get("session", ctx)
 	if err != nil || request.State != sess.Values["state"] {

@@ -16,6 +16,7 @@ var validate *validator.Validate
 
 type AuthController interface {
 	InitState(ctx echo.Context) error
+	GetSession(ctx echo.Context) error
 	Login(ctx echo.Context) error
 	//Callback(ctx echo.Context) error
 	//Logout(ctx echo.Context) error
@@ -35,6 +36,16 @@ type LoginRequest struct {
 	Password   string `json:"password" validate:"required"`
 	State      string `json:"state" validate:"required"`
 	RedirectTo string `json:"redirect_to" validate:"required,url"`
+}
+
+func (c *authController) GetSession(ctx echo.Context) error {
+	profile, err := c.authUsecase.Session(ctx)
+	if err != nil {
+		ctx.Logger().Infof("Failed to get session: %+v", err)
+		return transDtoErrorToEcho(err)
+	}
+	result := map[string]string{"profile": profile}
+	return ctx.JSON(http.StatusOK, result)
 }
 
 func (c *authController) InitState(ctx echo.Context) error {

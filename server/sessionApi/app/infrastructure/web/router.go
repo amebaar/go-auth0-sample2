@@ -50,6 +50,7 @@ func setRoute(e *echo.Echo,
 	authController controller.AuthController,
 ) error {
 	e.GET("/state", func(c echo.Context) error { return authController.InitState(c) })
+	e.GET("/session", func(c echo.Context) error { return authController.GetSession(c) })
 	e.POST("/login", func(c echo.Context) error { return authController.Login(c) })
 
 	//e.GET("/callback", func(c echo.Context) error { return authController.Callback(c) })
