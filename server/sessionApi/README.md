@@ -2,6 +2,7 @@
 [Resource Owner Password Flow](https://auth0.com/docs/authorization/flows/resource-owner-password-flow) を用いてauth0でログインするサンプル。
 
 ## 動作確認
+0. `.env.sample`を、`.env`にリネームして適切に設定する
 1. セッションを発行
 ```shell
 $ curl -i -c cookie.txt http://localhost/state
