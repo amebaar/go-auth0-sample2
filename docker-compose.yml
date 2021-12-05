@@ -1,0 +1,56 @@
+version: "3"
+services:
+#  admin-front:
+#    build: "./front/admin-front"
+#    container_name: "admin-front"
+#    volumes:
+#      - ./front/admin-front:/usr/src/app/admin-front
+#    ports:
+#      - "3000:3000"
+#    command: sh -c "yarn start"
+#    stdin_open: true
+#    environment:
+#      - CHOKIDAR_USEPOLLING=true
+  session-api:
+    build: "server/sessionApi"
+    container_name: "session-api"
+    tty: true
+    volumes:
+      - ./server/sessionApi:/go/src/sessionApi
+    ports:
+      - "80:8080"
+    command: sh -c "go run main.go"
+    stdin_open: true
+#  user-api:
+#    build: "server/userApi"
+#    container_name: "user-api"
+#    tty: true
+#   volumes:
+#      - ./server/userApi:/go/src/userApi
+#    ports:
+#      - "8081:8081"
+#    command: sh -c "go run main.go"
+#    stdin_open: true
+  redis:
+    image: "redis:latest"
+    container_name: "redis"
+    ports:
+      - "6379:6379"
+    volumes:
+      - "./data/redis:/data"
+#  database:
+#    image: mariadb:10.7
+#    container_name: "database"
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: main
+#      MYSQL_USER: docker
+#      MYSQL_PASSWORD: docker
+#      TZ: 'Asia/Tokyo'
+#   volumes:
+#      - ./data/mysql/data:/var/lib/mysql
+#      - ./data/mysql/config:/etc/mysql/conf.d
+#      - ./data/mysql/sql:/docker-entrypoint-initdb.d
+#    ports:
+#      - "3306:3306"
+
