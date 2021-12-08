@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/joho/godotenv"
+	"go-auth0-sample2/sdk/authman"
+	"go-auth0-sample2/server/sessionApi/app/adapter/gateway"
 	"go-auth0-sample2/server/sessionApi/app/adapter/web/controller"
-	"go-auth0-sample2/server/sessionApi/app/infrastructure/auth0"
+	"go-auth0-sample2/server/sessionApi/app/domain/service"
 	"go-auth0-sample2/server/sessionApi/app/infrastructure/web"
 	"go-auth0-sample2/server/sessionApi/app/usecase/interactor"
 	"log"
@@ -14,12 +16,20 @@ func main() {
 		log.Fatalf("Failed to load the env vars: %+v", err)
 	}
 
-	authClient, err := auth0.New()
+	// TODO("DIフレームワーク導入。uber/diとか")
+	authMan, err := authman.GetAuthMan()
 	if err != nil {
 		panic(err)
 	}
-	authUseCase := interactor.NewAuthUsecase(authClient)
+	tokenRepo, err := gateway.NewTokenRepository()
+	if err != nil {
+		panic(err)
+	}
+	authSvc := service.NewAuthService(tokenRepo)
+	sessRepo := gateway.NewSessionRepository()
+	authUseCase := interactor.NewAuthUsecase(authMan, authSvc, sessRepo)
 	authController := controller.NewAuthController(authUseCase)
+
 	web.Start(authController)
 	/*
 		cl, err := auth0.New()
