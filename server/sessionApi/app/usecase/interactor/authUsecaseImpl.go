@@ -69,3 +69,7 @@ func (u *authUsecase) Login(ctx echo.Context, request *inputport.AuthLoginReques
 
 	return u.sessRepository.Save(ctx, userContext)
 }
+
+func (u *authUsecase) Logout(ctx echo.Context) error {
+	return u.sessRepository.Discard(ctx)
+}

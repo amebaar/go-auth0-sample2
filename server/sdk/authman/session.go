@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	RoleNamespace = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+	RoleNamespace = `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`
 	CompanyIdKey  = "cid"
 	NameKey       = "name"
 	StateKey      = "state"
@@ -27,10 +27,15 @@ func (sr *sessionManager) loadUserProfile(ctx echo.Context) (model.UserProfile, 
 		return nil, fmt.Errorf("failed to fetch user profile from session")
 	}
 
-	roles, ok := profile[RoleNamespace].([]string)
+	roles, ok := profile[RoleNamespace].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("invalid profile: roles is %+v", roles)
+		return nil, fmt.Errorf("invalid profile: invalid roles: %+v", profile)
 	}
+	var castedRoles []string
+	for _, v := range roles {
+		castedRoles = append(castedRoles, v.(string))
+	}
+
 	var cidPtr *int
 	cid, ok := profile[CompanyIdKey].(int)
 	if ok {
@@ -38,18 +43,13 @@ func (sr *sessionManager) loadUserProfile(ctx echo.Context) (model.UserProfile, 
 	}
 	name, ok := profile[NameKey].(string)
 	if !ok {
-		return nil, fmt.Errorf("invalid profile: name is %+v", name)
-	}
-	state, ok := profile[StateKey].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid profile: state is %+v", state)
+		return nil, fmt.Errorf("invalid profile: invalid name: %+v", profile)
 	}
 
 	return model.NewUserProfile(
 		cidPtr,
 		model.UserName(name),
-		model.UserRoles(roles),
-		state,
+		model.UserRoles(castedRoles),
 	), nil
 }
 

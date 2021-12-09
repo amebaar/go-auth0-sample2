@@ -12,14 +12,12 @@ type userProfile struct {
 	companyId int
 	name      *userName
 	roles     *userRoles
-	state     string
 	// add some user metadata which must be stored in session
 }
 
 type consumerProfile struct {
 	name  *userName
 	roles *userRoles
-	state string
 	// add some user metadata which must be stored in session
 }
 
@@ -45,15 +43,14 @@ func NewUserProfile(
 	companyId *int,
 	name *userName,
 	roles *userRoles,
-	state string,
 ) UserProfile {
 	if companyId == nil {
 		return &consumerProfile{
-			name, roles, state,
+			name, roles,
 		}
 	} else {
 		return &userProfile{
-			*companyId, name, roles, state,
+			*companyId, name, roles,
 		}
 	}
 }
