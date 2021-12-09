@@ -18,8 +18,7 @@ type AuthController interface {
 	InitState(ctx echo.Context) error
 	GetSession(ctx echo.Context) error
 	Login(ctx echo.Context) error
-	//Callback(ctx echo.Context) error
-	//Logout(ctx echo.Context) error
+	Logout(ctx echo.Context) error
 }
 
 type authController struct {
@@ -94,6 +93,10 @@ func (c *authController) Login(ctx echo.Context) error {
 	}
 
 	return ctx.Redirect(http.StatusSeeOther, req.RedirectTo)
+}
+
+func (c *authController) Logout(ctx echo.Context) error {
+	return c.Logout(ctx)
 }
 
 func transDtoErrorToEcho(e error) error {
