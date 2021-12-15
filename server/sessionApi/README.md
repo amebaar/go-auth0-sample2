@@ -34,6 +34,7 @@ $ curl -i -b cookie.txt http://localhost:8080/session
 
 ### Social Login
 ブラウザで実施
+
 0. `.env.sample`を、`.env`にリネームして適切に設定し、サーバを起動
 1. ブラウザで http://localhost:8080/state にリクエスト。返却された`state`をコピー。
 2. 次にアクセス。http://localhost:8080/login?connection=google-oauth2&state=<stateをURLエンコードした文字列>&redirect=http://localhost:8080/session
