@@ -166,7 +166,10 @@ func (c *authController) Callback(ctx echo.Context) error {
 }
 
 func (c *authController) Logout(ctx echo.Context) error {
-	return c.authUsecase.Logout(ctx)
+	if err := c.authUsecase.Logout(ctx); err != nil {
+		return echo.ErrInternalServerError
+	}
+	return ctx.NoContent(http.StatusOK)
 }
 
 func transDtoErrorToEcho(e error) error {
