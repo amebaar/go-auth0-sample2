@@ -18,7 +18,7 @@ services:
     volumes:
       - ./server/sessionApi:/go/src/sessionApi
     ports:
-      - "80:8080"
+      - "8080:8080"
     command: sh -c "go run main.go"
     stdin_open: true
 #  user-api:

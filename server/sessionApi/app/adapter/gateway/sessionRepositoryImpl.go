@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -43,6 +44,7 @@ func (sr *sessionRepository) InitState(ctx echo.Context) (string, error) {
 
 func (sr *sessionRepository) IsValidState(ctx echo.Context, state string) bool {
 	sess, err := session.Get("session", ctx)
+	fmt.Printf("%v, %v", state, sess.Values["state"])
 	return err == nil && state == sess.Values["state"]
 }
 

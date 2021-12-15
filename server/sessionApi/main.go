@@ -27,7 +27,7 @@ func main() {
 	}
 	authSvc := service.NewAuthService(tokenRepo)
 	sessRepo := gateway.NewSessionRepository()
-	authUseCase := interactor.NewAuthUsecase(authMan, authSvc, sessRepo)
+	authUseCase := interactor.NewAuthUsecase(authMan, authSvc, sessRepo, tokenRepo)
 	authController := controller.NewAuthController(authUseCase)
 
 	web.Start(authController)

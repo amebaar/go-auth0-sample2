@@ -18,6 +18,8 @@ type AuthController interface {
 	InitState(ctx echo.Context) error
 	GetSession(ctx echo.Context) error
 	Login(ctx echo.Context) error
+	SocialLogin(ctx echo.Context) error
+	Callback(ctx echo.Context) error
 	Logout(ctx echo.Context) error
 }
 
@@ -93,6 +95,74 @@ func (c *authController) Login(ctx echo.Context) error {
 	}
 
 	return ctx.Redirect(http.StatusSeeOther, req.RedirectTo)
+}
+
+func (c *authController) SocialLogin(ctx echo.Context) error {
+	// リクエストパース
+	connection := ctx.QueryParam("connection")
+	state := ctx.QueryParam("state")
+	redirectTo := ctx.QueryParam("redirect")
+	if connection == "" || state == "" {
+		ctx.Logger().Infof("Invalid query: %+v", ctx.QueryParams())
+		return echo.ErrBadRequest
+	}
+
+	// リダイレクト先のドメインチェック
+	redirectUrl, err := url.Parse(redirectTo)
+	if err != nil {
+		ctx.Logger().Infof("Failed to parse specified redirect url: %+v", err)
+		return echo.ErrBadRequest
+	}
+	if !config.IsAllowedDomain(redirectUrl.Host) {
+		ctx.Logger().Infof("Not allowed domain: %s", redirectUrl.Host)
+		return echo.ErrBadRequest
+	}
+
+	// ログイン処理
+	redirect, err := c.authUsecase.SocialLogin(ctx, &inputport.SocialLoginRequest{
+		Connection: connection,
+		State:      state,
+		RedirectTo: redirectTo,
+	})
+	if err != nil {
+		ctx.Logger().Infof("Failed to login: %+v", err)
+		return transDtoErrorToEcho(err)
+	}
+
+	return ctx.Redirect(http.StatusTemporaryRedirect, redirect)
+}
+
+func (c *authController) Callback(ctx echo.Context) error {
+	// リクエストパース
+	src := ctx.QueryParam("src")
+	code := ctx.QueryParam("code")
+	state := ctx.QueryParam("state")
+	if code == "" || state == "" {
+		ctx.Logger().Infof("Invalid query: %+v", ctx.QueryParams())
+		return echo.ErrBadRequest
+	}
+
+	// リダイレクト先のドメインチェック
+	redirectUrl, err := url.Parse(src)
+	if err != nil {
+		ctx.Logger().Infof("Failed to parse specified redirect url: %+v", err)
+		return echo.ErrBadRequest
+	}
+	if !config.IsAllowedDomain(redirectUrl.Host) {
+		ctx.Logger().Infof("Not allowed domain: %s", redirectUrl.Host)
+		return echo.ErrBadRequest
+	}
+
+	// セッション更新処理
+	if err := c.authUsecase.UpdateSession(ctx, &inputport.UpdateSessionRequest{
+		State: state,
+		Code:  code,
+	}); err != nil {
+		ctx.Logger().Infof("Failed to login: %+v", err)
+		return transDtoErrorToEcho(err)
+	}
+
+	return ctx.Redirect(http.StatusTemporaryRedirect, src)
 }
 
 func (c *authController) Logout(ctx echo.Context) error {

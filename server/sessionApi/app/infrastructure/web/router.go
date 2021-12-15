@@ -39,7 +39,7 @@ func setMiddleware(e *echo.Echo) error {
 	e.Use(middleware.Recover())
 
 	// Session Setup
-	store, err := redistore.NewRediStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+	store, err := redistore.NewRediStore(10, "tcp", "redis:6379", "", []byte("secret"))
 	if err != nil {
 		return err
 	}
@@ -57,8 +57,12 @@ func setRoute(e *echo.Echo,
 		func(c echo.Context) error { return authController.GetSession(c) })
 	e.POST("/login",
 		func(c echo.Context) error { return authController.Login(c) })
+	e.GET("/login",
+		func(c echo.Context) error { return authController.SocialLogin(c) })
 	e.GET("/logout",
 		func(c echo.Context) error { return authController.Logout(c) })
+	e.GET("/callback",
+		func(c echo.Context) error { return authController.Callback(c) })
 
 	e.GET("/read",
 		func(c echo.Context) error { return c.String(http.StatusOK, "readOk") },

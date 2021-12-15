@@ -10,20 +10,23 @@ import (
 	"go-auth0-sample2/server/sessionApi/app/domain/service"
 	"go-auth0-sample2/server/sessionApi/app/usecase/dto"
 	"go-auth0-sample2/server/sessionApi/app/usecase/inputport"
+	"net/url"
 )
 
 type authUsecase struct {
-	authMan        authman.AuthMan
-	authService    service.AuthService
-	sessRepository repository.SessionRepository
+	authMan         authman.AuthMan
+	authService     service.AuthService
+	sessRepository  repository.SessionRepository
+	tokenRepository repository.TokenRepository
 }
 
 func NewAuthUsecase(
 	authMan authman.AuthMan,
 	authService service.AuthService,
 	sessRepository repository.SessionRepository,
+	tokenRepository repository.TokenRepository,
 ) inputport.AuthUsecase {
-	return &authUsecase{authMan, authService, sessRepository}
+	return &authUsecase{authMan, authService, sessRepository, tokenRepository}
 }
 
 func (u *authUsecase) InitState(ctx echo.Context) (string, error) {
@@ -62,6 +65,35 @@ func (u *authUsecase) Login(ctx echo.Context, request *inputport.AuthLoginReques
 	userContext, err := u.authService.FetchUserContextByUserCredential(
 		ctx.Request().Context(),
 		model.NewUserCredential(name, pass),
+	)
+	if err != nil {
+		return err
+	}
+
+	return u.sessRepository.Save(ctx, userContext)
+}
+
+func (u *authUsecase) SocialLogin(ctx echo.Context, request *inputport.SocialLoginRequest) (string, error) {
+	if !u.sessRepository.IsValidState(ctx, request.State) {
+		return "", fmt.Errorf("invalid state")
+	}
+
+	redirectTo, err := url.Parse(request.RedirectTo)
+	if err != nil {
+		return "", err
+	}
+
+	return u.tokenRepository.GetAuthCodeUrl(ctx.Request().Context(), request.State, request.Connection, redirectTo)
+}
+
+func (u *authUsecase) UpdateSession(ctx echo.Context, request *inputport.UpdateSessionRequest) error {
+	if !u.sessRepository.IsValidState(ctx, request.State) {
+		return fmt.Errorf("invalid state")
+	}
+
+	userContext, err := u.authService.FetchUserContextByCode(
+		ctx.Request().Context(),
+		request.Code,
 	)
 	if err != nil {
 		return err

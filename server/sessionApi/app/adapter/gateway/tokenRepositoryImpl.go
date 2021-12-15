@@ -8,6 +8,7 @@ import (
 	"go-auth0-sample2/server/sessionApi/app/domain/repository"
 	"golang.org/x/oauth2"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -31,6 +32,7 @@ func NewTokenRepository() (repository.TokenRepository, error) {
 	conf := oauth2.Config{
 		ClientID:     os.Getenv("AUTH0_CLIENT_ID"),
 		ClientSecret: os.Getenv("AUTH0_CLIENT_SECRET"),
+		RedirectURL:  os.Getenv("AUTH0_CALLBACK_URL"),
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile"},
 	}
@@ -47,6 +49,17 @@ func NewTokenRepository() (repository.TokenRepository, error) {
 func (ar *tokenRepository) GetToken(ctx context.Context, cred model.UserCredential) (*oauth2.Token, error) {
 	newCtx := context.WithValue(ctx, oauth2.HTTPClient, ar.Client) // 使用するHTTP Clientを指定
 	return ar.PasswordCredentialsToken(newCtx, cred.GetName(), cred.GetPassword())
+}
+
+func (ar *tokenRepository) GetAuthCodeUrl(ctx context.Context, state string, conn string, redirectTo *url.URL) (string, error) {
+	redirectUrl := oauth2.SetAuthURLParam("redirect_uri", ar.Config.RedirectURL+"?src="+redirectTo.String())
+	connection := oauth2.SetAuthURLParam("connection", conn)
+	return ar.AuthCodeURL(state, redirectUrl, connection), nil
+}
+
+func (ar *tokenRepository) GetTokenByCode(ctx context.Context, code string) (*oauth2.Token, error) {
+	newCtx := context.WithValue(ctx, oauth2.HTTPClient, ar.Client) // 使用するHTTP Clientを指定
+	return ar.Exchange(newCtx, code)
 }
 
 func (ar *tokenRepository) VerifyIDToken(ctx context.Context, token *oauth2.Token) (*oidc.IDToken, error) {
