@@ -17,6 +17,7 @@ var validate *validator.Validate
 type AuthController interface {
 	InitState(ctx echo.Context) error
 	GetSession(ctx echo.Context) error
+	SignUp(ctx echo.Context) error
 	Login(ctx echo.Context) error
 	SocialLogin(ctx echo.Context) error
 	Callback(ctx echo.Context) error
@@ -30,6 +31,12 @@ type authController struct {
 func NewAuthController(authUsecase inputport.AuthUsecase) AuthController {
 	validate = validator.New()
 	return &authController{authUsecase}
+}
+
+type SignUpRequest struct {
+	Email      string `json:"email" validate:"required,email"`
+	Password   string `json:"password" validate:"required"`
+	RedirectTo string `json:"redirect_to" validate:"required,url"`
 }
 
 type LoginRequest struct {
@@ -57,6 +64,43 @@ func (c *authController) InitState(ctx echo.Context) error {
 	}
 	result := map[string]string{"state": state}
 	return ctx.JSON(http.StatusOK, result)
+}
+
+func (c *authController) SignUp(ctx echo.Context) error {
+	// リクエストパース
+	var req SignUpRequest
+	err := json.NewDecoder(ctx.Request().Body).Decode(&req)
+	if err != nil {
+		ctx.Logger().Infof("Failed to decode request: %+v", err)
+		return echo.ErrBadRequest
+	}
+	defer ctx.Request().Body.Close()
+	if err := validate.Struct(req); err != nil {
+		ctx.Logger().Infof("Failed to validate request: %+v", err)
+		return echo.ErrBadRequest
+	}
+
+	// リダイレクト先のドメインチェック
+	redirectUrl, err := url.Parse(req.RedirectTo)
+	if err != nil {
+		ctx.Logger().Infof("Failed to parse specified redirect url: %+v", err)
+		return echo.ErrBadRequest
+	}
+	if !config.IsAllowedDomain(redirectUrl.Host) {
+		ctx.Logger().Infof("Not allowed domain: %s", redirectUrl.Host)
+		return echo.ErrBadRequest
+	}
+
+	// サインアップ処理
+	if err := c.authUsecase.SignUp(ctx, &inputport.SignUpRequest{
+		Email:    req.Email,
+		Password: req.Password,
+	}); err != nil {
+		ctx.Logger().Infof("Failed to sign up: %+v", err)
+		return transDtoErrorToEcho(err)
+	}
+
+	return ctx.Redirect(http.StatusSeeOther, req.RedirectTo)
 }
 
 func (c *authController) Login(ctx echo.Context) error {

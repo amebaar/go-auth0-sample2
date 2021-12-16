@@ -54,6 +54,13 @@ func (u *authUsecase) Session(ctx echo.Context) (string, error) {
 	return fmt.Sprint(profile), nil
 }
 
+func (u *authUsecase) SignUp(ctx echo.Context, request *inputport.SignUpRequest) error {
+	mail := model.UserName(request.Email)
+	pass := model.UserPassword(request.Password)
+
+	return u.tokenRepository.CreateUser(ctx.Request().Context(), model.NewUserCredential(mail, pass))
+}
+
 func (u *authUsecase) Login(ctx echo.Context, request *inputport.AuthLoginRequest) error {
 	if !u.sessRepository.IsValidState(ctx, request.State) {
 		return fmt.Errorf("invalid state")

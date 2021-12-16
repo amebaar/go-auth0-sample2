@@ -55,6 +55,8 @@ func setRoute(e *echo.Echo,
 		func(c echo.Context) error { return authController.InitState(c) })
 	e.GET("/session",
 		func(c echo.Context) error { return authController.GetSession(c) })
+	e.POST("/signup",
+		func(c echo.Context) error { return authController.SignUp(c) })
 	e.POST("/login",
 		func(c echo.Context) error { return authController.Login(c) })
 	e.GET("/login",

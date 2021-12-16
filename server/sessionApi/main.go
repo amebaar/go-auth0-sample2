@@ -6,6 +6,7 @@ import (
 	"go-auth0-sample2/server/sessionApi/app/adapter/gateway"
 	"go-auth0-sample2/server/sessionApi/app/adapter/web/controller"
 	"go-auth0-sample2/server/sessionApi/app/domain/service"
+	"go-auth0-sample2/server/sessionApi/app/infrastructure/auth"
 	"go-auth0-sample2/server/sessionApi/app/infrastructure/web"
 	"go-auth0-sample2/server/sessionApi/app/usecase/interactor"
 	"log"
@@ -21,7 +22,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tokenRepo, err := gateway.NewTokenRepository()
+	authClient := auth.GetClient()
+	tokenRepo, err := gateway.NewTokenRepository(authClient)
 	if err != nil {
 		panic(err)
 	}

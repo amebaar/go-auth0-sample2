@@ -6,6 +6,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"go-auth0-sample2/server/sessionApi/app/domain/model"
 	"go-auth0-sample2/server/sessionApi/app/domain/repository"
+	"go-auth0-sample2/server/sessionApi/app/infrastructure/auth"
 	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
@@ -16,9 +17,10 @@ type tokenRepository struct {
 	*oidc.Provider
 	oauth2.Config
 	*http.Client
+	authClient auth.Client
 }
 
-func NewTokenRepository() (repository.TokenRepository, error) {
+func NewTokenRepository(authClient auth.Client) (repository.TokenRepository, error) {
 	ctx := context.Background()
 
 	provider, err := oidc.NewProvider(
@@ -43,12 +45,22 @@ func NewTokenRepository() (repository.TokenRepository, error) {
 		provider,
 		conf,
 		httpClient,
+		authClient,
 	}, nil
 }
 
 func (ar *tokenRepository) GetToken(ctx context.Context, cred model.UserCredential) (*oauth2.Token, error) {
 	newCtx := context.WithValue(ctx, oauth2.HTTPClient, ar.Client) // 使用するHTTP Clientを指定
 	return ar.PasswordCredentialsToken(newCtx, cred.GetName(), cred.GetPassword())
+}
+
+func (ar *tokenRepository) CreateUser(ctx context.Context, cred model.UserCredential) error {
+	return ar.authClient.CreateUser(&auth.CreateUserRequest{
+		Email:      cred.GetName(),
+		Password:   cred.GetPassword(),
+		Connection: "Username-Password-Authentication", // TODO
+		UserName:   nil,
+	})
 }
 
 func (ar *tokenRepository) GetAuthCodeUrl(ctx context.Context, state string, conn string, redirectTo *url.URL) (string, error) {
